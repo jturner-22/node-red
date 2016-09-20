@@ -330,7 +330,7 @@ RED.palette.editor = (function() {
             loadedList = [];
             packageList.editableList('empty');
             $(".palette-module-shade-status").html(RED._('palette.editor.loading'));
-            var catalogues = RED.settings.theme('palette.catalogues')||['http://catalogue.nodered.org/catalogue.json'];
+            var catalogues = RED.settings.theme('palette.catalogues')||['https://' + location.hostname + ':3000/node-red-proxy/catalogue.json'/*'http://catalogue.nodered.org/catalogue', */];
             catalogueLoadStatus = [];
             catalogueCount = catalogues.length;
             if (catalogues.length > 1) {
