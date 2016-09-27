@@ -1,5 +1,5 @@
 /**
- * Copyright 2013, 2015 IBM Corp.
+ * Copyright 2013, 2016 IBM Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ var when = require('when');
 var Path = require('path');
 var log = require("../log");
 
+var runtime;
 var storageModule;
 var settingsAvailable;
 var sessionsAvailable;
@@ -42,28 +43,47 @@ function is_malicious(path) {
 }
 
 var storageModuleInterface = {
-        init: function(settings) {
+        init: function(_runtime) {
+            runtime = _runtime;
             try {
-                storageModule = moduleSelector(settings);
+                storageModule = moduleSelector(runtime.settings);
                 settingsAvailable = storageModule.hasOwnProperty("getSettings") && storageModule.hasOwnProperty("saveSettings");
                 sessionsAvailable = storageModule.hasOwnProperty("getSessions") && storageModule.hasOwnProperty("saveSessions");
             } catch (e) {
                 return when.reject(e);
             }
-            return storageModule.init(settings);
+            return storageModule.init(runtime.settings);
         },
         getFlows: function() {
-            return storageModule.getFlows();
+            return storageModule.getFlows().then(function(flows) {
+                return storageModule.getCredentials().then(function(creds) {
+                    return {
+                        flows: flows,
+                        credentials: creds
+                    }
+                })
+            });
         },
-        saveFlows: function(flows) {
-            return storageModule.saveFlows(flows);
+        saveFlows: function(config) {
+            var flows = config.flows;
+            var credentials = config.credentials;
+            var credentialSavePromise;
+            if (config.credentialsDirty) {
+                credentialSavePromise = storageModule.saveCredentials(credentials);
+            } else {
+                credentialSavePromise = when.resolve();
+            }
+
+            return credentialSavePromise.then(function() {
+                return storageModule.saveFlows(flows);
+            });
         },
-        getCredentials: function() {
-            return storageModule.getCredentials();
-        },
-        saveCredentials: function(credentials) {
-            return storageModule.saveCredentials(credentials);
-        },
+        // getCredentials: function() {
+        //     return storageModule.getCredentials();
+        // },
+        // saveCredentials: function(credentials) {
+        //     return storageModule.saveCredentials(credentials);
+        // },
         getSettings: function() {
             if (settingsAvailable) {
                 return storageModule.getSettings();
