@@ -39,6 +39,7 @@
             "displayConfig": "Configuration nodes",
             "import": "Import",
             "export": "Export",
+            "search": "Search flows",
             "clipboard": "Clipboard",
             "library": "Library",
             "examples": "Examples",
@@ -49,9 +50,10 @@
             "add": "Add",
             "rename": "Rename",
             "delete": "Delete",
-            "keyboardShortcuts": "Keyboard Shortcuts",
+            "keyboardShortcuts": "Keyboard shortcuts",
             "login": "Login",
-            "logout": "Logout"
+            "logout": "Logout",
+            "editPalette":"Manage palette"
         }
     },
     "user": {
@@ -95,6 +97,10 @@
             "compact":"compact",
             "formatted":"formatted",
             "copy": "Export to clipboard"
+        },
+        "import": {
+            "import": "Import to",
+            "newFlow": "new flow"
         }
     },
     "deploy": {
@@ -115,12 +121,15 @@
         "confirm": {
             "button": {
                 "confirm": "Confirm deploy",
-                "cancel": "Cancel"
+                "review": "Review differences",
+                "cancel": "Cancel",
+                "merge": "Merge changes"
             },
             "undeployedChanges": "You have undeployed changes.\n\nLeaving this page will lose these changes.",
             "improperlyConfigured": "The workspace contains some nodes that are not properly configured:",
             "unknown": "The workspace contains some unknown node types:",
-            "confirm": "Are you sure you want to deploy?"
+            "confirm": "Are you sure you want to deploy?",
+            "conflict": "The server is running a more recent set of flows."
         }
     },
     "subflow": {
@@ -160,7 +169,7 @@
         "addRemoveNode": "Add/remove node from selection",
         "deleteSelected": "Delete selected nodes or link",
         "importNode": "Import nodes",
-        "exportNode": "Export selected nodes",
+        "exportNode": "Export nodes",
         "nudgeNode": "Move selected node(s) by a small amount",
         "moveNode": "Move selected node(s) by a large amount",
         "toggleSidebar": "Toggle sidebar",
@@ -168,7 +177,8 @@
         "copyNode": "Copy selected nodes",
         "cutNode": "Cut selected nodes",
         "pasteNode": "Paste nodes",
-        "undoChange": "Undo the last change performed"
+        "undoChange": "Undo the last change performed",
+        "searchBox": "Open search box"
     },
     "library": {
         "openLibrary": "Open Library...",
@@ -246,6 +256,7 @@
             "disable": "disable",
             "remove": "remove",
             "install": "install",
+            "installed": "installed",
             "loading": "Loading catalogues...",
             "tab-nodes": "Nodes",
             "tab-install": "Install",
@@ -301,5 +312,8 @@
     },
     "editableList": {
         "add": "add"
+    },
+    "search": {
+        "empty": "No matches found"
     }
 }

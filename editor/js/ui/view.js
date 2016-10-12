@@ -806,7 +806,9 @@ RED.view = (function() {
             if (moving_set.length > 0) {
                 var ns = [];
                 for (var j=0;j<moving_set.length;j++) {
-                    ns.push({n:moving_set[j].n,ox:moving_set[j].ox,oy:moving_set[j].oy});
+                    ns.push({n:moving_set[j].n,ox:moving_set[j].ox,oy:moving_set[j].oy,changed:moving_set[j].n.changed});
+                    moving_set[j].n.dirty = true;
+                    moving_set[j].n.changed = true;
                 }
                 historyEvent = {t:"move",nodes:ns,dirty:RED.nodes.dirty()};
                 if (activeSpliceLink) {
@@ -987,10 +989,13 @@ RED.view = (function() {
         if (moving_set.length > 0) {
             var ns = [];
             for (var i=0;i<moving_set.length;i++) {
-                ns.push({n:moving_set[i].n,ox:moving_set[i].ox,oy:moving_set[i].oy});
+                ns.push({n:moving_set[i].n,ox:moving_set[i].ox,oy:moving_set[i].oy,changed:moving_set[i].n.changed});
+                moving_set[i].n.changed = true;
+                moving_set[i].n.dirty = true;
                 delete moving_set[i].ox;
                 delete moving_set[i].oy;
             }
+            redraw();
             RED.history.push({t:"move",nodes:ns,dirty:RED.nodes.dirty()});
             RED.nodes.dirty(true);
         }
@@ -1389,7 +1394,7 @@ RED.view = (function() {
         options.push({name:"delete",disabled:(moving_set.length===0 && selected_link === null),onselect:function() {deleteSelection();}});
         options.push({name:"cut",disabled:(moving_set.length===0),onselect:function() {copySelection();deleteSelection();}});
         options.push({name:"copy",disabled:(moving_set.length===0),onselect:function() {copySelection();}});
-        options.push({name:"paste",disabled:(clipboard.length===0),onselect:function() {importNodes(clipboard,true);}});
+        options.push({name:"paste",disabled:(clipboard.length===0),onselect:function() {importNodes(clipboard,false,true);}});
         options.push({name:"edit",disabled:(moving_set.length != 1),onselect:function() { RED.editor.edit(mdn);}});
         options.push({name:"select",onselect:function() {selectAll();}});
         options.push({name:"undo",disabled:(RED.history.depth() === 0),onselect:function() {RED.history.pop();}});
@@ -2194,19 +2199,22 @@ RED.view = (function() {
      *  - all "selected"
      *  - attached to mouse for placing - "IMPORT_DRAGGING"
      */
-    function importNodes(newNodesStr,touchImport) {
+    function importNodes(newNodesStr,addNewFlow,touchImport) {
         try {
             var activeSubflowChanged;
             if (activeSubflow) {
                 activeSubflowChanged = activeSubflow.changed;
             }
-            var result = RED.nodes.import(newNodesStr,true);
+            var result = RED.nodes.import(newNodesStr,true,addNewFlow);
             if (result) {
                 var new_nodes = result[0];
                 var new_links = result[1];
                 var new_workspaces = result[2];
                 var new_subflows = result[3];
-
+                var new_default_workspace = result[4];
+                if (addNewFlow && new_default_workspace) {
+                    RED.workspaces.show(new_default_workspace.id);
+                }
                 var new_ms = new_nodes.filter(function(n) { return n.hasOwnProperty("x") && n.hasOwnProperty("y") && n.z == RED.workspaces.active() }).map(function(n) { return {n:n};});
                 var new_node_ids = new_nodes.map(function(n){ return n.id; });
 
@@ -2278,6 +2286,9 @@ RED.view = (function() {
                     subflows:new_subflows,
                     dirty:RED.nodes.dirty()
                 };
+                if (new_ms.length === 0) {
+                    RED.nodes.dirty(true);
+                }
                 if (activeSubflow) {
                     var subflowRefresh = RED.subflow.refresh(true);
                     if (subflowRefresh) {
@@ -2382,6 +2393,46 @@ RED.view = (function() {
                 }
             }
             return result;
+        },
+        reveal: function(id) {
+            if (RED.nodes.workspace(id) || RED.nodes.subflow(id)) {
+                RED.workspaces.show(id);
+            } else {
+                var node = RED.nodes.node(id);
+                if (node._def.category !== 'config' && node.z) {
+                    node.highlighted = true;
+                    node.dirty = true;
+                    RED.workspaces.show(node.z);
+                    RED.view.redraw();
+
+                    var screenSize = [$("#chart").width(),$("#chart").height()];
+                    var scrollPos = [$("#chart").scrollLeft(),$("#chart").scrollTop()];
+
+                    if (node.x < scrollPos[0] || node.y < scrollPos[1] || node.x > screenSize[0]+scrollPos[0] || node.y > screenSize[1]+scrollPos[1]) {
+                        var deltaX = '-='+((scrollPos[0] - node.x) + screenSize[0]/2);
+                        var deltaY = '-='+((scrollPos[1] - node.y) + screenSize[1]/2);
+                        $("#chart").animate({
+                            scrollLeft: deltaX,
+                            scrollTop: deltaY
+                        },200);
+                    }
+
+                    var flash = 22;
+                    var flashFunc = function() {
+                        flash--;
+                        node.highlighted = !node.highlighted;
+                        node.dirty = true;
+                        RED.view.redraw();
+                        if (flash >= 0) {
+                            setTimeout(flashFunc,100);
+                        }
+                    }
+                    flashFunc();
+                } else if (node._def.category === 'config') {
+                    RED.sidebar.config.show(id);
+                }
+            }
         }
+
     };
 })();
